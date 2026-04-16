@@ -1,0 +1,7 @@
+streamlit
+sentence-transformers==2.6.1
+faiss-cpu
+numpy
+requests
+textblob
+PyPDF2

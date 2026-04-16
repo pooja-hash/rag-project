@@ -1,0 +1,18 @@
+India is a country in South Asia.
+The capital of India is New Delhi.
+Kubernetes is used for container orchestration.
+Kubernetes is an open-source container orchestration platform.
+It automates deployment, scaling, and management of containerized applications.
+Kubernetes was originally developed by Google and is now maintained by the CNCF.
+
+Docker is a platform for building, shipping, and running containers.
+A container packages code and its dependencies together so apps run reliably.
+Docker Desktop is available for Mac, Windows, and Linux.
+
+FAISS stands for Facebook AI Similarity Search.
+It is a library for efficient similarity search and clustering of dense vectors.
+FAISS is widely used in RAG systems for retrieving relevant document chunks.
+
+Python is a high-level programming language known for simplicity and readability.
+It is widely used in machine learning, data science, and backend development.
+Popular Python frameworks include FastAPI, Django, and Flask.
