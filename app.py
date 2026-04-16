@@ -1,4 +1,3 @@
-cat > app.py << 'EOF'
 import streamlit as st
 import time
 import numpy as np
@@ -6,18 +5,16 @@ import faiss
 from sentence_transformers import SentenceTransformer
 import PyPDF2
 
-# ---------------- CONFIG ----------------
 st.set_page_config(page_title="RAG Chatbot", layout="wide")
 st.title("🤖 Chat with Your Documents")
 
-# ---------------- LOAD MODEL (CACHE) ----------------
 @st.cache_resource
 def load_model():
     return SentenceTransformer("all-MiniLM-L6-v2")
 
 model = load_model()
 
-# ---------------- READ FILES ----------------
+# -------- FILE READING --------
 def read_pdf(file):
     reader = PyPDF2.PdfReader(file)
     text = ""
@@ -28,42 +25,36 @@ def read_pdf(file):
 def read_txt(file):
     return file.read().decode("utf-8")
 
-# ---------------- CHUNKING ----------------
-def chunk_text(text, chunk_size=200):
+# -------- CHUNKING --------
+def chunk_text(text, size=200):
     words = text.split()
-    chunks = []
-    for i in range(0, len(words), chunk_size):
-        chunks.append(" ".join(words[i:i+chunk_size]))
-    return chunks
+    return [" ".join(words[i:i+size]) for i in range(0, len(words), size)]
 
-# ---------------- BUILD INDEX ----------------
+# -------- BUILD INDEX --------
 def build_index(docs):
     chunks = []
     for doc in docs:
         chunks.extend(chunk_text(doc))
 
     embeddings = model.encode(chunks)
-    dimension = embeddings.shape[1]
-
-    index = faiss.IndexFlatL2(dimension)
+    index = faiss.IndexFlatL2(embeddings.shape[1])
     index.add(np.array(embeddings))
 
     return index, chunks
 
-# ---------------- RETRIEVE ----------------
-def retrieve(query, index, chunks, top_k=3):
-    query_embedding = model.encode([query])
-    distances, indices = index.search(np.array(query_embedding), top_k)
-    return [chunks[i] for i in indices[0]]
+# -------- RETRIEVE --------
+def retrieve(query, index, chunks):
+    q = model.encode([query])
+    _, idx = index.search(np.array(q), 3)
+    return [chunks[i] for i in idx[0]]
 
-# ---------------- UI ----------------
+# -------- UI UPLOAD --------
 uploaded_files = st.file_uploader(
     "Upload your documents",
     type=["pdf", "txt"],
     accept_multiple_files=True
 )
 
-# ---------------- PROCESS DOCS ----------------
 docs = []
 
 if uploaded_files:
@@ -73,16 +64,16 @@ if uploaded_files:
         else:
             docs.append(read_txt(file))
 else:
-    docs = ["This is a default document about AI and machine learning."]
+    docs = ["Default document about AI"]
 
-# ---------------- BUILD RAG ----------------
-if "index" not in st.session_state:
+# -------- BUILD INDEX DYNAMIC --------
+if "index" not in st.session_state or uploaded_files:
     with st.spinner("Processing documents..."):
         index, chunks = build_index(docs)
         st.session_state.index = index
         st.session_state.chunks = chunks
 
-# ---------------- QUERY ----------------
+# -------- QUERY --------
 query = st.text_input("Ask a question:")
 
 if query:
@@ -91,8 +82,7 @@ if query:
     context_chunks = retrieve(query, st.session_state.index, st.session_state.chunks)
     context = " ".join(context_chunks)
 
-    # simple answer (no LLM to avoid crash)
-    answer = "Answer based on documents: " + context[:300]
+    answer = "Answer: " + context[:300]
 
     end = time.time()
 
@@ -100,9 +90,8 @@ if query:
     st.write(answer)
 
     st.subheader("Response Time")
-    st.write(f"{end - start:.2f} seconds")
+    st.write(f"{end - start:.2f} sec")
 
-    with st.expander("Retrieved Context"):
-        for i, chunk in enumerate(context_chunks):
-            st.write(f"{i+1}. {chunk}")
-EOF
+    with st.expander("Context"):
+        for i, c in enumerate(context_chunks):
+            st.write(f"{i+1}. {c}")
