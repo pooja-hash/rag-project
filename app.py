@@ -112,7 +112,7 @@ if query:
     context_chunks = retrieve(query, model, index, chunks)
     context = " ".join(context_chunks)
 
-    answer = generate_answer(context, query)
+    answer = "Demo Answer: " + context[:200]
 
     end = time.time()
 
